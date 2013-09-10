@@ -5,7 +5,7 @@
 .equ rowMultiplier = 4
 .equ FactAdivisor = 10
 .equ tickRate = 192.5   ;only using this value for now
-
+.equ gForceCheck = 5
 
 
 .dseg 						; Start data segment
@@ -54,6 +54,8 @@ Main:
 		;sts ScheduleFlag, r20		;Hint - variable to use for task scheduling. you might also need a schedule counter?
 
 		sbi PORTD,PD2			;I/O Setup
+		sbi PORTB,0;
+		sbi DDRB,0;	
 
 		;********* INT0 ********
 		ldi r16,(1<<INT0) ; int masks INT0 set
@@ -88,7 +90,43 @@ Main:
 
 		sei ; enable interrupts and off we go!
 
+Collision_Detection:
+	
+	ldi r16, 1<<ADSC ;start conversion
+	out ADSC, r16
+	
+	ldi r16, ADCH		;Load ADC high value into r16 
+	andi r16,0b00000011 ;only take two lsb's of ADCH
+	lsl r16				; shift output to left by two to give 2 MSBs of g force measurement 
+	lsl r16
+	
+	ldi r17, ADCL		; Load ADC low value into r17 and get two MSBs 
+	andi r17,0b11000000
+	lsr r17				; Shift output to the right by 6 to get 2 LSBs of g-force measurement 
+	lsr r17
+	lsr r17
+	lsr r17
+	lsr r17
+	lsr r17
 
+	add r16,r17 ; add two MSBs to LSBs of the g-force measurement
+	
+	ldi r17, gForceCheck ; Load and compare g-Force threshold to measurement
+	cp r16,r17
+	BRGE collisionIndicatorOn ;If g-force is >= 5 then turn LED0 on
+	
+	
+
+	cp r16,r17
+	BRLT collisionIndicatorOff ; If g-force is <= 5 then turn LED0 off
+
+	rjmp Collision_Detection
+	
+	
+
+
+collisionIndicatorOn: cbi PORTB,0	;Turn collision detection LED0 on
+collisionIndicatorOff: sbi PORTB,0	;Turn collision detection LED0 off
 
 forever:
 		Start_Task UpTime

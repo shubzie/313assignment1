@@ -95,12 +95,12 @@ Collision_Detection:
 	ldi r16, 1<<ADSC ;start conversion
 	out ADSC, r16
 	
-	ldi r16, ADCH		;Load ADC high value into r16 
+	in r16, ADCH		;Load ADC high value into r16 
 	andi r16,0b00000011 ;only take two lsb's of ADCH
 	lsl r16				; shift output to left by two to give 2 MSBs of g force measurement 
 	lsl r16
 	
-	ldi r17, ADCL		; Load ADC low value into r17 and get two MSBs 
+	in r17, ADCL		; Load ADC low value into r17 and get two MSBs 
 	andi r17,0b11000000
 	lsr r17				; Shift output to the right by 6 to get 2 LSBs of g-force measurement 
 	lsr r17
@@ -124,9 +124,11 @@ Collision_Detection:
 	
 	
 
-
 collisionIndicatorOn: cbi PORTB,0	;Turn collision detection LED0 on
+rjmp Collision_Detection
+
 collisionIndicatorOff: sbi PORTB,0	;Turn collision detection LED0 off
+rjmp Collision_Detection
 
 forever:
 		Start_Task UpTime
